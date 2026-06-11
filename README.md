@@ -20,3 +20,13 @@ python manage.py migrate
 Crear Superusuario (opcional para el admin de Django):
 
 python manage.py createsuperuser
+
+luego deben poner un correo y contraseña que se acuerden 
+
+luego de eso deben correr el servidor
+
+python manage.py runserver
+
+tambien para ver el Swager a la url que le entreguen deran colocarle al lado de eso lo siguiente
+
+/docs
