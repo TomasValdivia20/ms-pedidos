@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 import dj_database_url
 
-#Vamos a cargar la base de datos desde la variable de entorno DATABASE_URL
+# Vamos a cargar la base de datos desde la variable de entorno DATABASE_URL
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -19,7 +19,8 @@ SECRET_KEY = 'django-insecure-gpv5y0)z0qj5i58an3$j5k!jplt0t-a@wiusk0o64()hfmcj5s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# 1. PERMITIMOS CONEXIONES LOCALES (Evita errores de Host no permitido)
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -32,11 +33,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',  # 2. SE AGREGA LA LIBRERÍA DE CORS
     'gestion',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # 3. DEBE IR ARRIBA, justo debajo de SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,10 +76,17 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-    
 }
 
-#CIRCUIT BRAKER MS-INVENTARIO
+# 4. CONFIGURACIÓN DEL PUENTE CORS (Le damos permiso explícito a tu BFF)
+# Agregamos tanto el puerto 8001 por si lo corres directo como localhost o 127.0.0.1
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:8001",
+    "http://localhost:8001",
+]
+
+
+# CIRCUIT BRAKER MS-INVENTARIO
 MS_INVENTARIO_URL = os.environ.get('MS_INVENTARIO_URL', 'http://localhost:8001')
 
 
