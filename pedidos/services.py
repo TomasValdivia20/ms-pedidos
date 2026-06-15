@@ -6,7 +6,7 @@ from django.conf import settings
 
 from gestion.models import CabeceraPedido, GuiaDespacho, EstadoPedido
 from gestion.repositories.pedidos_repositories import PedidoRepository, BodegaRepository, GuiaDespachoRepository
-from gestion.factories.pedidos_factories import PedidoFactoryProvider
+from gestion.factories import PedidoFactoryProvider
 from gestion.circuit_breaker.pedidos_circuitbreaker import inventario_cb, CircuitBreakerAbierto, CircuitBreakerFallo
 
 logger = logging.getLogger(__name__)

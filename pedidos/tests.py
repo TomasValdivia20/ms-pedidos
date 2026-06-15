@@ -8,8 +8,8 @@ from django.utils import timezone
 
 from gestion.models import Bodega, CabeceraPedido, DetallePedido, EstadoPedido, TipoCarga
 from gestion.repositories.pedidos_repositories import PedidoRepository, BodegaRepository, GuiaDespachoRepository
-from gestion.services.pedidos_services import PedidoService
-from gestion.factories.pedidos_factories import PedidoFactoryProvider, PedidoEstandarFactory, PedidoPrioritarioFactory
+from gestion.services.services import PedidoService
+from gestion.factories import PedidoFactoryProvider, PedidoEstandarFactory, PedidoPrioritarioFactory
 from gestion.circuit_breaker.pedidos_circuitbreaker import CircuitBreaker, EstadoCircuito, CircuitBreakerAbierto
 
 
