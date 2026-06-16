@@ -2,12 +2,10 @@ import uuid
 import logging
 from datetime import datetime
 from django.db import transaction
-from django.conf import settings
 
-from gestion.models import CabeceraPedido, GuiaDespacho, EstadoPedido
-from gestion.repositories.pedidos_repositories import PedidoRepository, BodegaRepository, GuiaDespachoRepository
-from gestion.factories import PedidoFactoryProvider
-from gestion.circuit_breaker.pedidos_circuitbreaker import inventario_cb, CircuitBreakerAbierto, CircuitBreakerFallo
+from pedidos.models import CabeceraPedido, GuiaDespacho, EstadoPedido
+from pedidos.repositories import PedidoRepository, BodegaRepository, GuiaDespachoRepository
+from pedidos.factories import PedidoFactoryProvider
 
 logger = logging.getLogger(__name__)
 
@@ -20,25 +18,7 @@ class PedidoService:
         self.guia_repo        = GuiaDespachoRepository()
 
 
-    # Verificación de stock (Circuit Breaker)
-
-    def _verificar_stock(self, sku: str, cantidad: int) -> None:
-        
-        url = f"{settings.MS_INVENTARIO_URL}/api/inventario/stock/{sku}/"
-        try:
-            data = inventario_cb.llamar(url)
-            stock_disponible = data.get('cantidad', 0)
-            if stock_disponible < cantidad:
-                raise ValueError(
-                    f"Stock insuficiente para SKU '{sku}'. "
-                    f"Disponible: {stock_disponible}, Solicitado: {cantidad}."
-                )
-        except CircuitBreakerAbierto:
-            raise ValueError(
-                "El servicio de inventario no está disponible. Intente más tarde."
-            )
-        except CircuitBreakerFallo as e:
-            raise ValueError(f"No se pudo verificar inventario del SKU '{sku}': {e}")
+    # Verificación de stock (delegada al BFF)
 
     # Crear pedido
 
@@ -53,9 +33,6 @@ class PedidoService:
     ) -> CabeceraPedido:
 
         cliente_uuid = uuid.UUID(cliente_id)
-
-        for item in items:
-            self._verificar_stock(item['sku'], item['cantidad'])
 
         factory = PedidoFactoryProvider.obtener_factory(tipo, self.repository, self.bodega_repo)
         pedido = factory.crear_pedido(
@@ -155,7 +132,7 @@ class PedidoService:
     def _generar_numero_guia(self) -> str:
 
         from django.db.models import Max
-        from models import GuiaDespacho
+        from pedidos.models import GuiaDespacho
 
         anio = datetime.now().year
         max_num = GuiaDespacho.objects.filter(

@@ -1,10 +1,5 @@
 from pathlib import Path
 import os
-from dotenv import load_dotenv
-import dj_database_url
-
-# Vamos a cargar la base de datos desde la variable de entorno DATABASE_URL
-load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,8 +28,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders',  # 2. SE AGREGA LA LIBRERÍA DE CORS
-    'gestion',
+    'corsheaders',  
+    'drf_spectacular',
+    'pedidos',
 ]
 
 MIDDLEWARE = [
@@ -48,7 +44,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'ms_inventario_core.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
@@ -65,7 +61,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'ms_inventario_core.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
@@ -86,8 +82,15 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 
-# CIRCUIT BRAKER MS-INVENTARIO
-MS_INVENTARIO_URL = os.environ.get('MS_INVENTARIO_URL', 'http://localhost:8001')
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MS-Pedidos API',
+    'DESCRIPTION': 'Microservicio de Pedidos - SmartLogix',
+    'VERSION': '1.0.0',
+}
 
 
 # Password validation

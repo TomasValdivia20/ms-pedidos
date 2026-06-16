@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional, List
 
-from gestion.models import (
+from pedidos.models import (
     Bodega,
     CabeceraPedido,
     DetallePedido,

@@ -1,5 +1,6 @@
+from decimal import Decimal
 from rest_framework import serializers
-from gestion.models import Bodega, CabeceraPedido, DetallePedido, GuiaDespacho, TipoCarga
+from pedidos.models import Bodega, CabeceraPedido, DetallePedido, GuiaDespacho, TipoCarga
 
 
 
@@ -93,7 +94,7 @@ class ItemPedidoInputSerializer(serializers.Serializer):
     sku                    = serializers.CharField(max_length=100)
     tipo_carga             = serializers.ChoiceField(choices=TipoCarga.choices)
     cantidad               = serializers.IntegerField(min_value=1)
-    precio_unitario        = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01)
+    precio_unitario        = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
     bodega_origen_id       = serializers.UUIDField()
     hora_retiro            = serializers.DateTimeField()
     hora_despacho          = serializers.DateTimeField()

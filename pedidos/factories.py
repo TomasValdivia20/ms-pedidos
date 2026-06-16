@@ -1,8 +1,8 @@
 import uuid
 from abc import ABC, abstractmethod
 
-from gestion.models import CabeceraPedido
-from gestion.repositories.pedidos_repositories import PedidoRepository, BodegaRepository
+from pedidos.models import CabeceraPedido
+from pedidos.repositories import PedidoRepository, BodegaRepository
 
 
 class PedidoFactory(ABC):

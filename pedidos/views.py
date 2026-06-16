@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from gestion.services import PedidoService
-from gestion.serializers import (
+from pedidos.services import PedidoService
+from pedidos.serializers import (
     CabeceraPedidoSerializer,
     CrearPedidoSerializer,
     GuiaDespachoSerializer,

@@ -65,8 +65,8 @@ class Migration(migrations.Migration):
                 ('hora_despacho', models.DateTimeField(help_text='Fecha y hora programada de salida hacia la dirección de entrega.')),
                 ('direccion_entrega', models.TextField(help_text='Dirección de entrega específica para este ítem del pedido.')),
                 ('codigo_postal_entrega', models.CharField(help_text='Código postal de la dirección de entrega de este ítem.', max_length=10)),
-                ('bodega_origen', models.ForeignKey(help_text='PROTECT sirve para que no se pueda eliminar una bodega con despachos activos.', on_delete=django.db.models.deletion.PROTECT, related_name='detalles_pedido', to='gestion.bodega')),
-                ('pedido', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='detalles', to='gestion.cabecerapedido')),
+                ('bodega_origen', models.ForeignKey(help_text='PROTECT sirve para que no se pueda eliminar una bodega con despachos activos.', on_delete=django.db.models.deletion.PROTECT, related_name='detalles_pedido', to='pedidos.bodega')),
+                ('pedido', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='detalles', to='pedidos.cabecerapedido')),
             ],
             options={
                 'db_table': 'detalle_pedido',
@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
                 ('fecha_firma_despacho', models.DateTimeField(blank=True, null=True)),
                 ('firma_receptor', models.TextField(blank=True, help_text='Nombre o firma digital del receptor en la dirección de entrega.', null=True)),
                 ('fecha_firma_receptor', models.DateTimeField(blank=True, null=True)),
-                ('pedido', models.OneToOneField(on_delete=django.db.models.deletion.PROTECT, related_name='guia_despacho', to='gestion.cabecerapedido')),
+                ('pedido', models.OneToOneField(on_delete=django.db.models.deletion.PROTECT, related_name='guia_despacho', to='pedidos.cabecerapedido')),
             ],
             options={
                 'db_table': 'guia_despacho',

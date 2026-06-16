@@ -6,11 +6,10 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 from django.utils import timezone
 
-from gestion.models import Bodega, CabeceraPedido, DetallePedido, EstadoPedido, TipoCarga
-from gestion.repositories.pedidos_repositories import PedidoRepository, BodegaRepository, GuiaDespachoRepository
-from gestion.services.services import PedidoService
-from gestion.factories import PedidoFactoryProvider, PedidoEstandarFactory, PedidoPrioritarioFactory
-from gestion.circuit_breaker.pedidos_circuitbreaker import CircuitBreaker, EstadoCircuito, CircuitBreakerAbierto
+from pedidos.models import Bodega, CabeceraPedido, DetallePedido, EstadoPedido, TipoCarga
+from pedidos.repositories import PedidoRepository, BodegaRepository, GuiaDespachoRepository
+from pedidos.services import PedidoService
+from pedidos.factories import PedidoFactoryProvider, PedidoEstandarFactory, PedidoPrioritarioFactory
 
 
 # FIXTURES comunes
@@ -171,47 +170,6 @@ class TestPedidoFactory(TestCase):
             factory.crear_pedido(self.cliente_id, datos_destinatario(), [item_con_bodega_falsa])
         self.assertIn('bodega', str(ctx.exception).lower())
 
-# TESTS: Circuit Breaker
-
-
-class TestCircuitBreaker(TestCase):
-
-    def setUp(self):
-        self.cb = CircuitBreaker('TestSvc', umbral_fallos=2, timeout_segundos=999)
-
-    def test_estado_inicial_closed(self):
-        self.assertEqual(self.cb.estado, EstadoCircuito.CLOSED)
-
-    @patch('ms_pedidos.circuit_breaker.requests.request')
-    def test_fallos_abren_circuito(self, mock_req):
-        import requests as req
-        mock_req.side_effect = req.exceptions.ConnectionError()
-
-        for _ in range(2):
-            try:
-                self.cb.llamar('http://fake/')
-            except Exception:
-                pass
-
-        self.assertEqual(self.cb.estado, EstadoCircuito.OPEN)
-
-    @patch('ms_pedidos.circuit_breaker.requests.request')
-    def test_circuito_abierto_no_llama_http(self, mock_req):
-        import requests as req
-        mock_req.side_effect = req.exceptions.ConnectionError()
-
-        for _ in range(2):
-            try:
-                self.cb.llamar('http://fake/')
-            except Exception:
-                pass
-
-        with self.assertRaises(CircuitBreakerAbierto):
-            self.cb.llamar('http://fake/')
-
-        self.assertEqual(mock_req.call_count, 2)  # La 3ra llamada no llegó a requests
-
-
 # TESTS: Service Layer (mocks)
 
 class TestPedidoService(TestCase):
@@ -258,23 +216,29 @@ class TestPedidoService(TestCase):
             svc.entregar_pedido(str(uuid.uuid4()))
         self.assertIn('Enviado', str(ctx.exception))
 
-    @patch('ms_pedidos.services.inventario_cb')
-    def test_stock_insuficiente_lanza_error(self, cb_mock):
-        cb_mock.llamar.return_value = {'cantidad': 0}
+    def test_crear_pedido_con_datos_validos(self):
+        repo_mock = MagicMock()
+        bodega_mock = MagicMock()
+        repo_mock.crear_cabecera.return_value = MagicMock(
+            id=uuid.uuid4(), total=0, estado=EstadoPedido.PENDIENTE,
+            notas='Test', destinatario_rut='12.345.678-9'
+        )
         svc = PedidoService()
-        with self.assertRaises(ValueError) as ctx:
-            svc.crear_pedido(
-                cliente_id=str(uuid.uuid4()),
-                destinatario=datos_destinatario(),
-                items=[{
-                    'sku': 'X1', 'cantidad': 5, 'precio_unitario': 10.0,
-                    'nombre_producto': 'Prod', 'tipo_carga': TipoCarga.GENERAL,
-                    'bodega_origen_id': str(uuid.uuid4()),
-                    'hora_retiro': timezone.now(), 'hora_despacho': timezone.now(),
-                    'direccion_entrega': 'Calle 1', 'codigo_postal_entrega': '8000000',
-                }]
-            )
-        self.assertIn('Stock insuficiente', str(ctx.exception))
+        svc.repository = repo_mock
+        svc.bodega_repo = bodega_mock
+        bodega_mock.obtener_por_id.return_value = MagicMock()
+        pedido = svc.crear_pedido(
+            cliente_id=str(uuid.uuid4()),
+            destinatario=datos_destinatario(),
+            items=[{
+                'sku': 'X1', 'cantidad': 1, 'precio_unitario': 10.0,
+                'nombre_producto': 'Prod', 'tipo_carga': TipoCarga.GENERAL,
+                'bodega_origen_id': str(uuid.uuid4()),
+                'hora_retiro': timezone.now(), 'hora_despacho': timezone.now(),
+                'direccion_entrega': 'Calle 1', 'codigo_postal_entrega': '8000000',
+            }]
+        )
+        self.assertIsNotNone(pedido)
 
     def test_guia_no_aprobado_lanza_error(self):
         repo_mock = MagicMock()
