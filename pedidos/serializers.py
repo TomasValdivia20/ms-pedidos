@@ -2,7 +2,9 @@ from decimal import Decimal
 from rest_framework import serializers
 from pedidos.models import Bodega, CabeceraPedido, DetallePedido, GuiaDespacho, TipoCarga
 
-
+from rest_framework import serializers
+from .models import DetallePedido
+from .services import consultar_producto_en_inventario  # Importamos la función del Paso 1
 
 # SALIDA: Bodegas
 
@@ -135,3 +137,35 @@ class CrearPedidoSerializer(serializers.Serializer):
                 "No se puede incluir el mismo SKU más de una vez en un pedido."
             )
         return items
+    
+
+    class DetallePedidoSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = DetallePedido
+            fields = '__all__'
+
+        def validate(self, data):
+            sku = data.get('sku')
+            
+            # 1. Consultamos al Microservicio de Inventario en tiempo real
+            producto_inventario = consultar_producto_en_inventario(sku)
+            
+            if not producto_inventario:
+                raise serializers.ValidationError(
+                    f"El producto con SKU '{sku}' no existe en el catálogo de Inventario."
+                )
+            
+            # 2. (Opcional) Validar si hay stock suficiente
+            cantidad_solicitada = data.get('cantidad')
+            stock_disponible = producto_inventario.get('stock_actual', 0)
+            
+            if cantidad_solicitada > stock_disponible:
+                raise serializers.ValidationError(
+                    f"Stock insuficiente para {sku}. Solicitado: {cantidad_solicitada}, Disponible: {stock_disponible}."
+                )
+
+            # 3. Auto-rellenar campos que vienen de inventario para asegurar integridad
+            data['precio_unitario'] = producto_inventario.get('precio_venta')
+            data['bodega_origen_id'] = producto_inventario.get('bodega_id')
+            
+            return data

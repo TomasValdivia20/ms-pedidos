@@ -6,7 +6,7 @@ from django.db import transaction
 from pedidos.models import CabeceraPedido, GuiaDespacho, EstadoPedido
 from pedidos.repositories import PedidoRepository, BodegaRepository, GuiaDespachoRepository
 from pedidos.factories import PedidoFactoryProvider
-
+import httpx
 logger = logging.getLogger(__name__)
 
 
@@ -146,3 +146,23 @@ class PedidoService:
 
         nuevo_num = ultimo_num + 1
         return f"GD-{anio}-{nuevo_num:05d}"
+    
+URL_MS_INVENTARIO = "http://127.0.0.1:8002/api/productos/"  # Ajusta el puerto de tu MS de Inventario
+
+def consultar_producto_en_inventario(sku: str):
+    """
+    Va al MS de Inventario a verificar si el SKU existe y traer sus datos (nombre, precio, bodega)
+    """
+    try:
+        # Hacemos la petición filtrando por el SKU
+        response = httpx.get(f"{URL_MS_INVENTARIO}?sku={sku}", timeout=3.0)
+        
+        if response.status_code == 200:
+            datos = response.json()
+            # Si tu API de inventario devuelve una lista, sacamos el primer elemento
+            if isinstance(datos, list) and len(datos) > 0:
+                return datos[0]
+            return datos
+    except httpx.RequestError:
+        return None
+    return None
