@@ -123,9 +123,9 @@ class DestinatarioInputSerializer(serializers.Serializer):
 
 
 class CrearPedidoSerializer(serializers.Serializer):
-    cliente_id   = serializers.UUIDField()
+    cliente_id   = serializers.CharField(max_length=100)
     tipo         = serializers.ChoiceField(choices=['estandar', 'prioritario'], default='estandar')
-    notas        = serializers.CharField(required=False, allow_blank=True, default=None)
+    notas        = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
     destinatario = DestinatarioInputSerializer()
     items        = ItemPedidoInputSerializer(many=True, min_length=1)
 

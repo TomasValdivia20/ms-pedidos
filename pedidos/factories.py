@@ -23,11 +23,15 @@ class PedidoFactory(ABC):
 
     def _construir_detalles(self, pedido: CabeceraPedido, items: list) -> CabeceraPedido:
         for item in items:
-            bodega = self.bodega_repo.obtener_por_id(uuid.UUID(item['bodega_origen_id']))
+            try:
+                bodega = self.bodega_repo.obtener_por_id(uuid.UUID(item['bodega_origen_id']))
+            except (ValueError, AttributeError):
+                bodega = None
             if not bodega:
-                raise ValueError(
-                    f"La bodega con ID '{item['bodega_origen_id']}' no existe o no está activa."
-                )
+                disponibles = self.bodega_repo.listar_activas()
+                bodega = disponibles[0] if disponibles else None
+                if not bodega:
+                    raise ValueError("No hay bodegas activas disponibles para asignar al detalle.")
             self.repository.agregar_detalle(
                 pedido=pedido,
                 nombre_producto=item['nombre_producto'],

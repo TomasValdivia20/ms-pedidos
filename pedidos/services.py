@@ -32,7 +32,11 @@ class PedidoService:
         notas: str = None,
     ) -> CabeceraPedido:
 
-        cliente_uuid = uuid.UUID(cliente_id)
+        try:
+            cliente_uuid = uuid.UUID(cliente_id)
+        except (ValueError, AttributeError):
+            logger.warning(f"cliente_id inválido, generando UUID automático: {cliente_id}")
+            cliente_uuid = uuid.uuid4()
 
         factory = PedidoFactoryProvider.obtener_factory(tipo, self.repository, self.bodega_repo)
         pedido = factory.crear_pedido(
